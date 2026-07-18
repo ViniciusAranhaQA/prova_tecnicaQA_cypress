@@ -4,22 +4,31 @@ Este projeto usa Cypress para automação de testes de API contra a API pública
 
 ## Estratégia dos cenários
 
-Os testes cobrem:
-- leitura pública de usuários
-- autenticação/erro 401 com token inválido
-- criação de usuário
-- atualização de usuário
-- paginação e filtragem
-- fluxo encadeado de criação, consulta e remoção
-- validação de erro em delete de recurso inexistente
-- validação de schema mínimo
-- cenário livre com dados dinâmicos
+A suíte foi organizada para mapear os cenários pedidos em testes independentes do Cypress, com validações claras e comentários de contexto junto a cada caso.
+
+Os cenários cobrem:
+- autenticação válida e consulta de usuários
+- cenário de erro com autenticação inválida
+- criação de usuário com dados dinâmicos
+- consulta e atualização parcial
+- paginação e filtros
+- encadeamento de chamadas entre criação, consulta e remoção
+- remoção e validação pós-exclusão
+- dois cenários livres com dados dinâmicos
+
+### Como garantir que todos os cenários executem
+- Cada cenário está implementado como um teste `it(...)` separado.
+- O arquivo principal exibe no relatório do Cypress cada caso executado.
+- Se algum cenário não rodar, ele aparecerá como ausente ou com falha no resumo final.
+- O uso de `Cypress.UserValidator` e `Cypress.UserFactory` mantém a execução consistente e reutilizável.
 
 ## Estrutura
 
 - cypress/e2e/api/goRest.cy.js: suíte principal com os cenários de API
+- cypress/api/routes/userRoutes.js: centraliza os endpoints da API
+- cypress/api/services/userService.js: camada de serviço responsável pelas requisições HTTP
+- cypress/api/validators/userValidator.js: validações reutilizáveis dos cenários
 - cypress/support/commands.js: comandos customizados do Cypress
-- cypress/support/apiService.js: camada de serviço orientada a objetos para encapsular as requisições ao GoRest
 - cypress/support/userFactory.js: factory para criar payloads de usuários de forma reutilizável
 - cypress/support/index.js: registro das abstrações no ambiente do Cypress
 - cypress.config.js: configuração do Cypress com dotenv
