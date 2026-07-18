@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "test:api": "cypress run --spec cypress/e2e/api/goRest.cy.js",
+    "test:api:headed": "cypress run --headed --spec cypress/e2e/api/goRest.cy.js"
+  },
+  "devDependencies": {
+    "cypress": "^15.18.1",
+    "dotenv": "^17.4.2"
+  }
+}
