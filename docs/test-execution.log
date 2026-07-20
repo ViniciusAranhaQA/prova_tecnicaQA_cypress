@@ -1,0 +1,88 @@
+◇ injected env (1) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+Warning: We failed to trash the existing run results.
+
+This error will not affect or change the exit code.
+
+Error: spawn Unknown system error -86
+    at ChildProcess.spawn (node:internal/child_process:420:11)
+    at spawn (node:child_process:800:9)
+    at execFile (node:child_process:349:17)
+    at execFile (node:child_process:245:21)
+    at execFile (node:electron/js2c/node_init:2:3936)
+    at s.exports (<embedded>:1133:627012)
+    at s.exports (<embedded>:1133:627613)
+    at s.exports (<embedded>:1133:670869)
+    at async <embedded>:2893:78164
+    at async Promise.all (index 0)
+    at async Object.u [as folder] (<embedded>:2893:78121)
+    at async Promise.all (index 0)
+    at async G (<embedded>:2893:93400)
+    at async Promise.all (index 2)
+    at async <embedded>:2893:108224
+    at async Object.startInMode (<embedded>:2900:5366)
+    at async startCypress (/Users/viniciusaranha/Library/Caches/Cypress/15.18.1/Cypress.app/Contents/Resources/app/packages/server/index.jsc:1:1005301)
+
+================================================================================
+
+  (Run Starting)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Cypress:        15.18.1                                                                        │
+  │ Browser:        Electron 138 (headless)                                                        │
+  │ Node Version:   v24.18.0 (/usr/local/bin/node)                                                 │
+  │ Specs:          1 found (goRest.cy.js)                                                         │
+  │ Searched:       cypress/e2e/api/goRest.cy.js                                                   │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+                                                                                                    
+  Running:  goRest.cy.js                                                                    (1 of 1)
+
+
+  GoRest API - Cenários técnicos
+    ✓ deve listar usuários e validar schema mínimo (616ms)
+    ✓ deve retornar 401 ao usar token inválido (517ms)
+    ✓ deve criar um usuário com dados válidos (523ms)
+    ✓ deve consultar e atualizar parcialmente um usuário criado (1822ms)
+    ✓ deve paginar e filtrar usuários (2144ms)
+    ✓ deve realizar fluxo encadeado: criar, consultar e remover usuário (1634ms)
+    ✓ deve remover usuário e validar que o recurso não existe mais (1587ms)
+    ✓ deve validar o schema completo de um usuário recém-criado (556ms)
+    ✓ deve retornar 404 ao tentar deletar usuário inexistente (474ms)
+
+
+  9 passing (10s)
+
+
+  (Results)
+
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Tests:        9                                                                                │
+  │ Passing:      9                                                                                │
+  │ Failing:      0                                                                                │
+  │ Pending:      0                                                                                │
+  │ Skipped:      0                                                                                │
+  │ Screenshots:  0                                                                                │
+  │ Video:        true                                                                             │
+  │ Duration:     9 seconds                                                                        │
+  │ Spec Ran:     goRest.cy.js                                                                     │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+  (Video)
+
+  -  Video output: /Users/viniciusaranha/Documents/automation_projects/prova_tecnicaQA_cypress/cypress/videos/goRest.cy.js.mp4
+
+
+================================================================================
+
+  (Run Finished)
+
+
+       Spec                                              Tests  Passing  Failing  Pending  Skipped  
+  ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ ✔  goRest.cy.js                             00:09        9        9        -        -        - │
+  └────────────────────────────────────────────────────────────────────────────────────────────────┘
+    ✔  All specs passed!                        00:09        9        9        -        -        -  
+

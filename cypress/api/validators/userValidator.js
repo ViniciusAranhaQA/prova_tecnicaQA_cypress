@@ -53,6 +53,30 @@ class UserValidator {
     expect(user.name, 'nome no schema').to.be.a('string').and.to.not.be.empty;
     expect(user.email, 'email no schema').to.be.a('string').and.to.include('@');
   }
+
+  static validateFullSchema(user) {
+    expect(user, 'usuário retornado').to.include.keys('id', 'name', 'email', 'gender', 'status');
+    expect(user.id, 'id no schema completo').to.be.a('number');
+    expect(user.name, 'nome no schema completo').to.be.a('string').and.to.not.be.empty;
+    expect(user.email, 'email no schema completo').to.be.a('string').and.to.include('@');
+    expect(user.gender, 'gênero no schema completo').to.be.oneOf(['male', 'female']);
+    expect(user.status, 'status no schema completo').to.be.oneOf(['active', 'inactive']);
+  }
+
+  static validateFilteredUsers(response, filters) {
+    expect(response.status, 'status HTTP da listagem filtrada').to.eq(200);
+    expect(response.body, 'body da listagem filtrada').to.be.an('array');
+    expect(response.body.length, 'quantidade de usuários filtrados').to.be.greaterThan(0);
+
+    response.body.forEach((user, index) => {
+      if (filters.gender) {
+        expect(user.gender, `gênero do usuário ${index}`).to.eq(filters.gender);
+      }
+      if (filters.status) {
+        expect(user.status, `status do usuário ${index}`).to.eq(filters.status);
+      }
+    });
+  }
 }
 
 export default UserValidator;

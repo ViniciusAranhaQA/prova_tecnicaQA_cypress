@@ -1,7 +1,8 @@
 {
   "scripts": {
     "test:api": "cypress run --spec cypress/e2e/api/goRest.cy.js",
-    "test:api:headed": "cypress run --headed --spec cypress/e2e/api/goRest.cy.js"
+    "test:api:headed": "cypress run --headed --spec cypress/e2e/api/goRest.cy.js",
+    "test:api:report": "mkdir -p docs && cypress run --spec cypress/e2e/api/goRest.cy.js 2>&1 | tee docs/test-execution.log"
   },
   "devDependencies": {
     "cypress": "^15.18.1",

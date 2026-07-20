@@ -1,32 +1,8 @@
 import UserRoutes from '../routes/userRoutes';
 
 class UserService {
-  constructor() {
-    this.authToken = Cypress.config('gorestToken') || process.env.GOREST_TOKEN || process.env.gorestToken || process.env.CYPRESS_gorestToken || '';
-  }
-
-  getAuthHeaders(extraHeaders = {}) {
-    const headers = {
-      Accept: 'application/json',
-      ...extraHeaders,
-    };
-
-    if (!headers.Authorization && this.authToken && this.authToken !== 'YOUR_TOKEN_HERE') {
-      headers.Authorization = `Bearer ${this.authToken}`;
-    }
-
-    return headers;
-  }
-
-  request(method, url, options = {}) {
-    return cy.request({
-      method,
-      url,
-      headers: this.getAuthHeaders(options.headers),
-      failOnStatusCode: false,
-      ...options,
-      headers: this.getAuthHeaders(options.headers),
-    });
+  request(method, path, options = {}) {
+    return cy.apiRequest(method, path, options);
   }
 
   getUsers(query = '') {

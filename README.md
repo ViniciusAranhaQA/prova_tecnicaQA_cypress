@@ -1,53 +1,107 @@
 # GoRest API Cypress
 
-Este projeto usa Cypress para automação de testes de API contra a API pública do GoRest.
+Automação de testes de API com Cypress para a API pública do [GoRest](https://gorest.co.in/), desenvolvida como resposta ao desafio técnico de QA.
 
-## Estratégia dos cenários
+## Pré-requisitos
 
-A suíte foi organizada para mapear os cenários pedidos em testes independentes do Cypress, com validações claras e comentários de contexto junto a cada caso.
-
-Os cenários cobrem:
-- autenticação válida e consulta de usuários
-- cenário de erro com autenticação inválida
-- criação de usuário com dados dinâmicos
-- consulta e atualização parcial
-- paginação e filtros
-- encadeamento de chamadas entre criação, consulta e remoção
-- remoção e validação pós-exclusão
-- dois cenários livres com dados dinâmicos
-
-### Como garantir que todos os cenários executem
-- Cada cenário está implementado como um teste `it(...)` separado.
-- O arquivo principal exibe no relatório do Cypress cada caso executado.
-- Se algum cenário não rodar, ele aparecerá como ausente ou com falha no resumo final.
-- O uso de `Cypress.UserValidator` e `Cypress.UserFactory` mantém a execução consistente e reutilizável.
-
-## Estrutura
-
-- cypress/e2e/api/goRest.cy.js: suíte principal com os cenários de API
-- cypress/api/routes/userRoutes.js: centraliza os endpoints da API
-- cypress/api/services/userService.js: camada de serviço responsável pelas requisições HTTP
-- cypress/api/validators/userValidator.js: validações reutilizáveis dos cenários
-- cypress/support/commands.js: comandos customizados do Cypress
-- cypress/support/userFactory.js: factory para criar payloads de usuários de forma reutilizável
-- cypress/support/index.js: registro das abstrações no ambiente do Cypress
-- cypress.config.js: configuração do Cypress com dotenv
+- [Node.js](https://nodejs.org/) (LTS recomendado)
+- npm
+- Token Bearer válido do GoRest ([como obter](https://gorest.co.in/docs/bearer-tokens))
 
 ## Como executar
 
 1. Instale as dependências:
-   npm install
-2. Crie um arquivo .env com o token do GoRest. O projeto aceita tanto `GOREST_TOKEN` quanto `gorestToken`:
-   GOREST_TOKEN=seu_token_aqui
-   # ou
-   gorestToken=seu_token_aqui
+
+```bash
+npm install
+```
+
+2. Configure o token:
+
+```bash
+cp .env.example .env
+```
+
+Edite `.env` com seu token:
+
+```
+GOREST_TOKEN=seu_token_aqui
+```
+
+> O arquivo `.env` é local e **não** vai para o Git. O `.env.example` serve apenas como template para quem clonar o repositório.
+
 3. Execute os testes:
-   npm run test:api
 
-## Observações
+```bash
+npm run test:api
+```
 
-- O token é mantido localmente em .env e está ignorado pelo Git.
-- O projeto usa dotenv para carregar esse valor e repassar o token para os requests de API.
-- O arquivo .env deve conter pelo menos uma das opções abaixo:
-  - GOREST_TOKEN=seu_token_aqui
-  - ou gorestToken=seu_token_aqui
+### Scripts disponíveis
+
+| Script | Descrição |
+|---|---|
+| `npm run test:api` | Executa a suíte em modo headless |
+| `npm run test:api:headed` | Executa com browser visível |
+| `npm run test:api:report` | Executa e salva o log em `docs/test-execution.log` |
+
+## Estratégia dos cenários
+
+Cada item do desafio foi mapeado em um teste `it(...)` independente, com validações reutilizáveis e dados gerados dinamicamente (`UserFactory`) para evitar dependência de registros fixos na API compartilhada.
+
+| # | Cenário do desafio | Teste | Estratégia |
+|---|---|---|---|
+| 1 | Autenticação válida e consulta | `deve listar usuários e validar schema mínimo` | `GET /users` com Bearer token + schema mínimo |
+| 2 | Autenticação inválida | `deve retornar 401 ao usar token inválido` | Token inválido → expectativa de `401` |
+| 3 | Criação com dados dinâmicos | `deve criar um usuário com dados válidos` | `UserFactory.build()` + `POST /users` → `201` |
+| 4 | Consulta e atualização parcial | `deve consultar e atualizar parcialmente um usuário criado` | Cria usuário próprio → `GET /users/:id` → `PATCH` |
+| 5 | Paginação e filtros | `deve paginar e filtrar usuários` | Cria usuário com atributos conhecidos e localiza via filtro `gender` + `status` + `email`; valida páginas distintas |
+| 6 | Encadeamento de chamadas | `deve realizar fluxo encadeado: criar, consultar e remover usuário` | `POST` → `GET` → `DELETE` |
+| 7 | Remoção e validação pós-exclusão | `deve remover usuário e validar que o recurso não existe mais` | `POST` → `DELETE` → `GET` confirmando `404` |
+| 8 | Dois cenários livres | `deve validar o schema completo...` / `deve retornar 404 ao tentar deletar...` | Schema completo após criação; delete de ID inexistente |
+
+### Decisões de implementação
+
+- **`cy.apiRequest`** — comando customizado que centraliza autenticação, `baseUrl` e `failOnStatusCode: false` (requisito do desafio para chamadas recorrentes)
+- **`UserService`** — delega todas as requisições HTTP ao comando customizado
+- **`UserValidator`** — assertions reutilizáveis com mensagens descritivas
+- **`UserFactory`** — gera emails únicos via timestamp
+- **Dados próprios** — cenários de alteração, exclusão e filtro criam o usuário antes de manipulá-lo, evitando dependência de dados pré-existentes na sandbox compartilhada
+- **Configuração** — `baseUrl`, retries, timeouts e token via `cypress.config.js` + dotenv
+
+## Estrutura do projeto
+
+```
+cypress/
+├── api/
+│   ├── routes/userRoutes.js        # paths dos endpoints
+│   ├── services/userService.js     # camada de serviço HTTP
+│   └── validators/userValidator.js # validações reutilizáveis
+├── e2e/api/goRest.cy.js            # suíte principal (9 testes)
+└── support/
+    ├── commands.js                 # cy.apiRequest, cy.expectJsonSchema
+    ├── userFactory.js              # geração dinâmica de payloads
+    ├── index.js                    # registro das abstrações Cypress.*
+    └── e2e.js                      # bootstrap do support
+cypress.config.js                   # baseUrl, dotenv, retries, vídeo
+.env.example                        # template do token (versionado)
+docs/test-execution.log             # evidência da execução
+```
+
+## Evidências de execução
+
+Última execução registrada: **9 testes passando** em ~9 segundos.
+
+Para gerar ou atualizar a evidência:
+
+```bash
+npm run test:api:report
+```
+
+- Log completo: `docs/test-execution.log`
+- Vídeo da execução: `cypress/videos/goRest.cy.js.mp4` (gerado localmente, ignorado pelo Git)
+
+## Referências
+
+- [GoRest API](https://gorest.co.in/)
+- [Documentação GoRest](https://gorest.co.in/docs)
+- [Bearer Token](https://gorest.co.in/docs/bearer-tokens)

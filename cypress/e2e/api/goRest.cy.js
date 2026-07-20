@@ -7,8 +7,6 @@ describe('GoRest API - Cenários técnicos', () => {
       Cypress.UserValidator.validateList(response);
       const user = response.body[0];
       Cypress.UserValidator.validateSchema(user);
-      expect(user.id).to.be.a('number');
-      expect(user.name).to.be.a('string');
     });
   });
 
@@ -28,23 +26,43 @@ describe('GoRest API - Cenários técnicos', () => {
     });
   });
 
-  // Cenário 4: Consulta e atualização parcial — busca um usuário existente e aplica uma atualização parcial para validar se a API aceita a mudança de dados.
-  it('deve atualizar um usuário existente', () => {
+  // Cenário 4: Consulta e atualização parcial — cria um usuário próprio, consulta o recurso e aplica PATCH parcial sem depender de dados externos.
+  it('deve consultar e atualizar parcialmente um usuário criado', () => {
+    const payload = Cypress.UserFactory.build();
     const updatePayload = {
       name: `Updated User ${Date.now()}`,
       status: 'inactive',
     };
 
-    apiService.getUsers('?page=1&per_page=1').then((listResponse) => {
-      const userId = listResponse.body[0].id;
-      apiService.updateUser(userId, updatePayload).then((response) => {
-        Cypress.UserValidator.validateUpdated(response, updatePayload);
+    apiService.createUser(payload).then((createResponse) => {
+      const userId = createResponse.body.id;
+      Cypress.UserValidator.validateCreated(createResponse, payload);
+
+      apiService.getUserById(userId).then((getResponse) => {
+        expect(getResponse.status).to.eq(200);
+        expect(getResponse.body.id).to.eq(userId);
+        expect(getResponse.body.name).to.eq(payload.name);
+
+        apiService.updateUser(userId, updatePayload).then((response) => {
+          Cypress.UserValidator.validateUpdated(response, updatePayload);
+        });
       });
     });
   });
 
-  // Cenário 5: Paginação e filtros — faz requisições em páginas diferentes para confirmar que a API retorna listas paginadas corretamente.
+  // Cenário 5: Paginação e filtros — cria um usuário com atributos conhecidos e o localiza via filtro, sem depender de dados pré-existentes na sandbox.
   it('deve paginar e filtrar usuários', () => {
+    const payload = Cypress.UserFactory.build({ gender: 'female', status: 'active' });
+
+    apiService.createUser(payload).then((createResponse) => {
+      Cypress.UserValidator.validateCreated(createResponse, payload);
+
+      apiService.getUsers(`?gender=female&status=active&email=${payload.email}`).then((filtered) => {
+        Cypress.UserValidator.validateFilteredUsers(filtered, { gender: 'female', status: 'active' });
+        expect(filtered.body.some((user) => user.email === payload.email), 'usuário criado presente no filtro').to.be.true;
+      });
+    });
+
     apiService.getUsers('?page=1&per_page=2').then((pageOne) => {
       expect(pageOne.status).to.eq(200);
       expect(pageOne.body).to.have.length(2);
@@ -60,7 +78,7 @@ describe('GoRest API - Cenários técnicos', () => {
     });
   });
 
-  // Cenário 6: Encadeamento de chamadas — cria um usuário, consulta o mesmo recurso e valida o fluxo sequencial entre operações da API.
+  // Cenário 6: Encadeamento de chamadas — cria um usuário, consulta o mesmo recurso e remove, validando cada etapa do fluxo.
   it('deve realizar fluxo encadeado: criar, consultar e remover usuário', () => {
     const payload = Cypress.UserFactory.build({ gender: 'female' });
 
@@ -76,40 +94,43 @@ describe('GoRest API - Cenários técnicos', () => {
 
         apiService.deleteUser(userId).then((deleteResponse) => {
           Cypress.UserValidator.validateDeleted(deleteResponse);
-
-          apiService.getUserById(userId).then((afterDelete) => {
-            Cypress.UserValidator.validateNotFound(afterDelete);
-          });
         });
       });
     });
   });
 
-  // Cenário 7: Remoção e validação pós-exclusão — remove um usuário criado e verifica se, após a exclusão, a consulta do recurso retorna erro 404.
-  it('deve validar erro ao tentar deletar usuário inexistente', () => {
-    apiService.deleteUser(999999999).then((response) => {
-      Cypress.UserValidator.validateNotFound(response);
+  // Cenário 7: Remoção e validação pós-exclusão — remove um usuário criado e confirma que a consulta subsequente retorna 404.
+  it('deve remover usuário e validar que o recurso não existe mais', () => {
+    const payload = Cypress.UserFactory.build();
+
+    apiService.createUser(payload).then((createResponse) => {
+      const userId = createResponse.body.id;
+      Cypress.UserValidator.validateCreated(createResponse, payload);
+
+      apiService.deleteUser(userId).then((deleteResponse) => {
+        Cypress.UserValidator.validateDeleted(deleteResponse);
+
+        apiService.getUserById(userId).then((afterDelete) => {
+          Cypress.UserValidator.validateNotFound(afterDelete);
+        });
+      });
     });
   });
 
-  // Cenário 8: Cenário livre 1 — valida a estrutura do usuário retornado em uma consulta e verifica se o schema básico está correto.
-  it('deve preencher o schema esperado para um usuário', () => {
-    apiService.getUsers('?page=1&per_page=1').then((response) => {
-      Cypress.UserValidator.validateList(response);
-      const user = response.body[0];
-      cy.expectJsonSchema(user);
-    });
-  });
-
-  // Cenário 8: Cenário livre 2 — cria um usuário com dados dinâmicos adicionais e valida se as propriedades retornadas correspondem ao payload enviado.
-  it('deve aceitar um cenário livre com dados dinâmicos', () => {
-    const payload = Cypress.UserFactory.build({ gender: 'female' });
+  // Cenário 8 — livre 1: valida o schema completo do usuário retornado após a criação dinâmica.
+  it('deve validar o schema completo de um usuário recém-criado', () => {
+    const payload = Cypress.UserFactory.build({ gender: 'female', status: 'active' });
 
     apiService.createUser(payload).then((response) => {
       Cypress.UserValidator.validateCreated(response, payload);
-      expect(response.body.name).to.eq(payload.name);
-      expect(response.body.status).to.eq(payload.status);
-      expect(response.body.email).to.eq(payload.email);
+      cy.expectJsonSchema(response.body);
+    });
+  });
+
+  // Cenário 8 — livre 2: valida erro 404 ao tentar deletar um usuário que não existe.
+  it('deve retornar 404 ao tentar deletar usuário inexistente', () => {
+    apiService.deleteUser(999999999).then((response) => {
+      Cypress.UserValidator.validateNotFound(response);
     });
   });
 });
